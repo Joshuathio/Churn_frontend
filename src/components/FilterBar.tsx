@@ -167,10 +167,8 @@ export function FilterBar({ filters, onChange, resultCount, totalCount }: Filter
           onChange={(v) => update('riskTier', v as FilterState['riskTier'])}
           options={[
             { value: 'all', label: 'Any' },
-            { value: 'critical', label: 'Critical' },
-            { value: 'elevated', label: 'Elevated' },
-            { value: 'moderate', label: 'Moderate' },
-            { value: 'low', label: 'Stable' },
+            { value: 'high', label: 'High' },
+            { value: 'low', label: 'Low' },
           ]}
         />
       </div>

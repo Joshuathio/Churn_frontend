@@ -19,37 +19,21 @@ export function formatPercent(value: number, digits = 1): string {
 }
 
 export function tierFromProbability(p: number): RiskTier {
-  if (p >= 0.75) return 'critical'
-  if (p >= 0.5) return 'elevated'
-  if (p >= 0.25) return 'moderate'
+  if (p >= 0.5) return 'high'
   return 'low'
 }
 
 export const tierLabel: Record<RiskTier, string> = {
-  critical: 'Critical',
-  elevated: 'Elevated',
-  moderate: 'Moderate',
-  low: 'Stable',
+  high: 'High',
+  low: 'Low',
 }
 
 export const tierColor: Record<RiskTier, { fg: string; bg: string; ring: string; dot: string }> = {
-  critical: {
+  high: {
     fg: 'text-rust-500',
     bg: 'bg-rust-500/10',
     ring: 'ring-rust-500/30',
     dot: 'bg-rust-500',
-  },
-  elevated: {
-    fg: 'text-ember-600',
-    bg: 'bg-ember-500/10',
-    ring: 'ring-ember-500/30',
-    dot: 'bg-ember-500',
-  },
-  moderate: {
-    fg: 'text-amber-700',
-    bg: 'bg-amber-500/10',
-    ring: 'ring-amber-500/30',
-    dot: 'bg-amber-500',
   },
   low: {
     fg: 'text-moss-600',

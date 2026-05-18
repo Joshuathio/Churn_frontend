@@ -14,7 +14,7 @@ export type PaymentMethod =
 export type ServiceOption = YesNo | 'No internet service'
 export type MultipleLinesOption = YesNo | 'No phone service'
 
-export type RiskTier = 'low' | 'moderate' | 'elevated' | 'critical'
+export type RiskTier = 'low' | 'high'
 
 export interface RiskFactor {
   feature: string
