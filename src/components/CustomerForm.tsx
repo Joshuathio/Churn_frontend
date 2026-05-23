@@ -1,7 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { X } from 'lucide-react'
 import type {
-  Customer,
   ContractType,
   InternetService,
   PaymentMethod,

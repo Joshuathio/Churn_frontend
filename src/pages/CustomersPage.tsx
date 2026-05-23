@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Download, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Users } from 'lucide-react'
 import type { FilterState } from '@/types'
-import { tierFromProbability } from '@/lib/utils'
 import { api, type CustomerWithName } from '@/lib/api'
 import { useApi } from '@/hooks/useApi'
 import { FilterBar } from '@/components/FilterBar'
@@ -21,50 +20,64 @@ const initialFilters: FilterState = {
 
 export function CustomersPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilters)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
   const [selected, setSelected] = useState<CustomerWithName | null>(null)
 
-  const { data, loading, error, refetch } = useApi(() => api.listCustomers(), [])
-  const customers = data ?? []
+  const customerQuery = useMemo(() => {
+    const tenure =
+      filters.tenureRange === '0-12'
+        ? { minTenure: 0, maxTenure: 12 }
+        : filters.tenureRange === '13-24'
+          ? { minTenure: 13, maxTenure: 24 }
+          : filters.tenureRange === '25-48'
+            ? { minTenure: 25, maxTenure: 48 }
+            : filters.tenureRange === '49+'
+              ? { minTenure: 49 }
+              : {}
 
-  const filtered = useMemo(() => {
-    return customers.filter((c) => {
-      // Search by name or ID
-      if (filters.search) {
-        const q = filters.search.toLowerCase()
-        if (
-          !c.displayName.toLowerCase().includes(q) &&
-          !c.customerID.toLowerCase().includes(q)
-        ) {
-          return false
-        }
-      }
-      // Probability range
-      const pct = c.churnProbability * 100
-      if (pct < filters.minProbability || pct > filters.maxProbability) return false
+    return {
+      page,
+      limit,
+      search: filters.search || undefined,
+      minProbability:
+        filters.minProbability > 0 ? filters.minProbability / 100 : undefined,
+      maxProbability:
+        filters.maxProbability < 100 ? filters.maxProbability / 100 : undefined,
+      contract: filters.contract !== 'all' ? filters.contract : undefined,
+      internet: filters.internet !== 'all' ? filters.internet : undefined,
+      riskLevel:
+        filters.riskTier === 'high'
+          ? 'HIGH'
+          : filters.riskTier === 'low'
+            ? 'LOW'
+            : undefined,
+      ...tenure,
+    } as const
+  }, [filters, page, limit])
 
-      // Contract
-      if (filters.contract !== 'all' && c.Contract !== filters.contract) return false
+  const { data, loading, error, refetch } = useApi(
+    () => api.listCustomers(customerQuery),
+    [customerQuery],
+  )
+  const customers = data?.data ?? []
+  const meta =
+    data?.meta ?? {
+      page,
+      limit,
+      totalRecords: 0,
+      totalPages: 1,
+    }
 
-      // Internet
-      if (filters.internet !== 'all' && c.InternetService !== filters.internet) return false
+  function handleFiltersChange(next: FilterState) {
+    setFilters(next)
+    setPage(1)
+  }
 
-      // Tenure range
-      if (filters.tenureRange !== 'all') {
-        const t = c.tenure
-        if (filters.tenureRange === '0-12' && !(t >= 0 && t <= 12)) return false
-        if (filters.tenureRange === '13-24' && !(t >= 13 && t <= 24)) return false
-        if (filters.tenureRange === '25-48' && !(t >= 25 && t <= 48)) return false
-        if (filters.tenureRange === '49+' && t < 49) return false
-      }
-
-      // Risk tier
-      if (filters.riskTier !== 'all') {
-        if (tierFromProbability(c.churnProbability) !== filters.riskTier) return false
-      }
-
-      return true
-    })
-  }, [filters, customers])
+  function handleLimitChange(nextLimit: number) {
+    setLimit(nextLimit)
+    setPage(1)
+  }
 
   return (
     <div className="space-y-6 animate-rise">
@@ -112,11 +125,19 @@ export function CustomersPage() {
         <>
           <FilterBar
             filters={filters}
-            onChange={setFilters}
-            resultCount={filtered.length}
-            totalCount={customers.length}
+            onChange={handleFiltersChange}
+            resultCount={customers.length}
+            totalCount={meta.totalRecords}
           />
-          <CustomerTable customers={filtered} onSelect={setSelected} />
+          <CustomerTable customers={customers} onSelect={setSelected} />
+          <PaginationControls
+            page={meta.page}
+            limit={meta.limit}
+            totalRecords={meta.totalRecords}
+            totalPages={meta.totalPages}
+            onPageChange={setPage}
+            onLimitChange={handleLimitChange}
+          />
           <div className="text-[11px] font-mono text-ink-900/40 text-center pt-2">
             Predictions served by the Random Forest Classifier · Refreshed in real-time
           </div>
@@ -125,6 +146,74 @@ export function CustomersPage() {
 
       {/* Drawer */}
       <CustomerDrawer customer={selected} onClose={() => setSelected(null)} />
+    </div>
+  )
+}
+
+function PaginationControls({
+  page,
+  limit,
+  totalRecords,
+  totalPages,
+  onPageChange,
+  onLimitChange,
+}: {
+  page: number
+  limit: number
+  totalRecords: number
+  totalPages: number
+  onPageChange: (page: number) => void
+  onLimitChange: (limit: number) => void
+}) {
+  const start = totalRecords === 0 ? 0 : (page - 1) * limit + 1
+  const end = Math.min(page * limit, totalRecords)
+
+  return (
+    <div className="bg-bone-50 border border-ink-900/10 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="text-xs font-mono text-ink-900/55 tabular">
+        Showing {start}-{end} of {totalRecords}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 text-xs font-mono text-ink-900/55">
+          Rows
+          <select
+            value={limit}
+            onChange={(event) => onLimitChange(Number(event.target.value))}
+            className="h-8 px-2 bg-bone-50 border border-ink-900/15 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-ink-900"
+          >
+            {[10, 25, 50, 100].map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+            className="h-8 w-8 inline-flex items-center justify-center border border-ink-900/15 text-ink-900/65 hover:bg-ink-900 hover:text-bone-50 transition-colors disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-900/65"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-xs font-mono text-ink-900/65 tabular min-w-24 text-center">
+            Page {page} / {Math.max(totalPages, 1)}
+          </span>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+            className="h-8 w-8 inline-flex items-center justify-center border border-ink-900/15 text-ink-900/65 hover:bg-ink-900 hover:text-bone-50 transition-colors disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-900/65"
+            aria-label="Next page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
