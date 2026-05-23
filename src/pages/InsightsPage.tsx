@@ -35,10 +35,10 @@ function aggregateFeatureImportance(customers: CustomerWithName[]) {
 }
 
 export function InsightsPage() {
-  const customersQ = useApi(() => api.listCustomers(), [])
+  const customersQ = useApi(() => api.listCustomers({ limit: 100 }), [])
   const contractsQ = useApi(() => api.getContractAggregates(), [])
 
-  const customers = customersQ.data ?? []
+  const customers = customersQ.data?.data ?? []
   const contracts: ContractAggregate[] = contractsQ.data ?? []
 
   const features = aggregateFeatureImportance(customers)

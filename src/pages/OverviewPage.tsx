@@ -25,12 +25,12 @@ export function OverviewPage() {
   const overviewQ = useApi(() => api.getOverview(), [])
   const historyQ = useApi(() => api.getPredictionHistory(), [])
   const distQ = useApi(() => api.getRiskDistribution(), [])
-  const customersQ = useApi(() => api.listCustomers(), [])
+  const customersQ = useApi(() => api.listCustomers({ limit: 100 }), [])
 
   const overview = overviewQ.data ?? emptyOverview
   const predictionHistory = historyQ.data ?? []
   const dist = distQ.data ?? []
-  const customers = customersQ.data ?? []
+  const customers = customersQ.data?.data ?? []
 
   const topAtRisk = [...customers]
     .sort((a, b) => b.churnProbability - a.churnProbability)

@@ -8,6 +8,32 @@ export type CustomerWithName = Customer & { displayName: string }
 // churnProbability, riskFactors, lastUpdated.
 export type CustomerInput = Omit <Customer,'customerID' | 'churnProbability' | 'riskFactors' | 'lastUpdated' | 'Churn'> & {displayName: string}
 
+export interface CustomerListParams {
+  page?: number
+  limit?: number
+  search?: string
+  minProbability?: number
+  maxProbability?: number
+  contract?: string
+  internet?: string
+  riskLevel?: 'LOW' | 'HIGH'
+  minTenure?: number
+  maxTenure?: number
+}
+
+export interface PaginationMeta {
+  page: number
+  limit: number
+  totalRecords: number
+  totalPages: number
+}
+
+export interface PaginatedCustomers {
+  msg: 'success'
+  data: CustomerWithName[]
+  meta: PaginationMeta
+}
+
 export interface OverviewStats {
   total: number
   atRisk: number
@@ -39,6 +65,7 @@ export interface ContractAggregate {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     ...init,
   })
   if (!res.ok) {
@@ -49,7 +76,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // Reads
-  listCustomers: () => request<CustomerWithName[]>('/customers'),
+  listCustomers: (params: CustomerListParams = {}) => {
+    const search = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        search.set(key, String(value))
+      }
+    })
+    const query = search.toString()
+    return request<PaginatedCustomers>(`/customers${query ? `?${query}` : ''}`)
+  },
   getCustomer: (id: string) =>
     request<CustomerWithName>(`/customers/${encodeURIComponent(id)}`),
   getOverview: () => request<OverviewStats>('/overview'),
@@ -69,7 +105,7 @@ export const api = {
 
   updateCustomer: (id: string, payload: CustomerInput) =>
     request<CustomerWithName>(`/customers/${encodeURIComponent(id)}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(payload),
     }),
 

@@ -91,7 +91,7 @@ export function CustomerDrawer({ customer, onClose }: CustomerDrawerProps) {
           <p className="mt-4 text-sm text-bone-200/80 leading-relaxed">
             Model classifies this customer as{' '}
             <span className={cn('font-semibold', colors.fg)}>{tierLabel[tier]} risk</span>.{' '}
-            {tier === 'critical' || tier === 'elevated'
+            {tier === 'high'
               ? 'Recommend immediate ChurnAi outreach within 48 hours.'
               : 'Monitor in standard quarterly review cycle.'}
           </p>
