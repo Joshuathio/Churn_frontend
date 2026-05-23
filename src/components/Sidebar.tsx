@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, BarChart3, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, BarChart3, Settings, LogOut, BriefcaseBusiness } from 'lucide-react'
 import { Wordmark } from './Wordmark'
 import { useAuth } from '@/context/AuthContext'
 import { cn, initials } from '@/lib/utils'
@@ -7,6 +7,7 @@ import { cn, initials } from '@/lib/utils'
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/customers', label: 'Customers', icon: Users },
+  { to: '/interventions', label: 'Cases', icon: BriefcaseBusiness },
   { to: '/insights', label: 'Insights', icon: BarChart3 },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]

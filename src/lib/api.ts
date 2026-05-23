@@ -1,4 +1,17 @@
-import type { Customer } from '@/types'
+import type {
+  CasePriority,
+  CaseResolutionOutcome,
+  CaseStatus,
+  Customer,
+  InterventionAnalytics,
+  InterventionCase,
+  OfferStatus,
+  OfferType,
+  OutreachChannel,
+  OutreachLog,
+  OutreachOutcome,
+  RetentionOffer,
+} from '@/types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -68,6 +81,61 @@ export interface ContractAggregate {
   churned: number
 }
 
+export interface PaginatedCases {
+  msg: 'success'
+  data: InterventionCase[]
+  meta: {
+    page: number
+    limit: number
+    totalRecords: number
+    totalPages: number
+    scope: 'mine' | 'unassigned' | 'all'
+  }
+}
+
+export interface CaseListParams {
+  page?: number
+  limit?: number
+  status?: CaseStatus
+  priority?: CasePriority
+  customerID?: string
+  scope?: 'mine' | 'unassigned' | 'all'
+}
+
+export interface OpenCaseInput {
+  customerID: string
+  assignedToId?: string
+  priority?: CasePriority
+  reason?: string
+}
+
+export interface OutreachInput {
+  channel: OutreachChannel
+  outcome: OutreachOutcome
+  notes?: string
+  nextFollowUpAt?: string
+}
+
+export interface RetentionOfferInput {
+  offerType: OfferType
+  title: string
+  description?: string
+  discountPercent?: number
+  discountAmount?: number
+  durationMonths?: number
+}
+
+export interface UpdateCaseInput {
+  status?: CaseStatus
+  priority?: CasePriority
+  assignedToId?: string | null
+  reason?: string | null
+  resolutionOutcome?: CaseResolutionOutcome | null
+  resolutionNote?: string | null
+  finalOutreachLogId?: string | null
+  finalOfferId?: string | null
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -101,6 +169,20 @@ export const api = {
     request<RiskDistributionBucket[]>('/predictions/distribution'),
   getContractAggregates: () =>
     request<ContractAggregate[]>('/analytics/by-contract'),
+  listInterventionCases: (params: CaseListParams = {}) => {
+    const search = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        search.set(key, String(value))
+      }
+    })
+    const query = search.toString()
+    return request<PaginatedCases>(`/interventions/cases${query ? `?${query}` : ''}`)
+  },
+  getInterventionCase: (id: string) =>
+    request<InterventionCase>(`/interventions/cases/${encodeURIComponent(id)}`),
+  getInterventionAnalytics: () =>
+    request<InterventionAnalytics>('/interventions/analytics'),
 
   // Mutations
   createCustomer: (payload: CustomerInput) =>
@@ -118,6 +200,36 @@ export const api = {
   deleteCustomer: (id: string) =>
     request<{ ok: true }>(`/customers/${encodeURIComponent(id)}`, {
       method: 'DELETE',
+    }),
+  openInterventionCase: (payload: OpenCaseInput) =>
+    request<InterventionCase>('/interventions/cases', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateInterventionCase: (id: string, payload: UpdateCaseInput) =>
+    request<InterventionCase>(`/interventions/cases/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  claimInterventionCase: (id: string) =>
+    request<InterventionCase>(`/interventions/cases/${encodeURIComponent(id)}/claim`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+  createOutreachLog: (caseId: string, payload: OutreachInput) =>
+    request<OutreachLog>(`/interventions/cases/${encodeURIComponent(caseId)}/outreach`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  createRetentionOffer: (caseId: string, payload: RetentionOfferInput) =>
+    request<RetentionOffer>(`/interventions/cases/${encodeURIComponent(caseId)}/offers`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateRetentionOfferStatus: (offerId: string, status: OfferStatus) =>
+    request<RetentionOffer>(`/interventions/offers/${encodeURIComponent(offerId)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
     }),
 }
 

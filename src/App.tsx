@@ -5,6 +5,8 @@ import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
 import { OverviewPage } from '@/pages/OverviewPage'
 import { CustomersPage } from '@/pages/CustomersPage'
+import { InterventionDetailPage } from '@/pages/InterventionDetailPage'
+import { InterventionsPage } from '@/pages/InterventionsPage'
 import { InsightsPage } from '@/pages/InsightsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
@@ -50,6 +52,26 @@ export default function App() {
                   <ProtectedRoute>
                      <AppShell>
                         <CustomersPage />
+                     </AppShell>
+                  </ProtectedRoute>
+               }
+            />
+            <Route
+               path="/interventions"
+               element={
+                  <ProtectedRoute>
+                     <AppShell>
+                        <InterventionsPage />
+                     </AppShell>
+                  </ProtectedRoute>
+               }
+            />
+            <Route
+               path="/interventions/:id"
+               element={
+                  <ProtectedRoute>
+                     <AppShell>
+                        <InterventionDetailPage />
                      </AppShell>
                   </ProtectedRoute>
                }
