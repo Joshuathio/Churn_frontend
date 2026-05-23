@@ -6,7 +6,13 @@ export type CustomerWithName = Customer & { displayName: string }
 
 // Input payload untuk create/update. Server yang generate customerID,
 // churnProbability, riskFactors, lastUpdated.
-export type CustomerInput = Omit <Customer,'customerID' | 'churnProbability' | 'riskFactors' | 'lastUpdated' | 'Churn'> & {displayName: string}
+export type CustomerInput = Omit<
+  Customer,
+  'customerID' | 'churnProbability' | 'riskFactors' | 'lastUpdated' | 'Churn'
+> & {
+  fullName: string
+  displayName: string
+}
 
 export interface CustomerListParams {
   page?: number

@@ -18,12 +18,13 @@ export type RiskTier = 'low' | 'high'
 
 export interface RiskFactor {
   feature: string
-  impact: number // 0..1, contribution from RF feature_importance
+  impact: number // 0..1, normalized contribution from model explanation
   direction: 'increases' | 'decreases'
 }
 
 export interface Customer {
   customerID: string
+  fullName?: string | null
   // Demographics
   gender: Gender
   SeniorCitizen: 0 | 1
@@ -48,7 +49,7 @@ export interface Customer {
   StreamingMovies: ServiceOption
   // Target / prediction
   Churn: YesNo
-  churnProbability: number // 0..1 from RF predict_proba
+  churnProbability: number // 0..1 from model probability output
   riskFactors: RiskFactor[]
   lastUpdated: string // ISO
 }

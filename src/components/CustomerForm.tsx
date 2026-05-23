@@ -18,11 +18,13 @@ interface CustomerFormProps {
   loading?: boolean
   error?: string | null
   onSubmit: (payload: CustomerInput) => void | Promise<void>
+  onDelete?: (customer: CustomerWithName) => void
   onClose: () => void
 }
 
 const emptyForm: CustomerInput = {
   displayName: '',
+  fullName: '',
   gender: 'Male',
   SeniorCitizen: 0,
   Partner: 'No',
@@ -47,6 +49,7 @@ const emptyForm: CustomerInput = {
 function customerToInput(c: CustomerWithName): CustomerInput {
   return {
     displayName: c.displayName,
+    fullName: c.fullName ?? c.displayName,
     gender: c.gender,
     SeniorCitizen: c.SeniorCitizen,
     Partner: c.Partner,
@@ -69,7 +72,15 @@ function customerToInput(c: CustomerWithName): CustomerInput {
   }
 }
 
-export function CustomerForm({ open, initial, loading, error, onSubmit, onClose }: CustomerFormProps) {
+export function CustomerForm({
+  open,
+  initial,
+  loading,
+  error,
+  onSubmit,
+  onDelete,
+  onClose,
+}: CustomerFormProps) {
   const [form, setForm] = useState<CustomerInput>(emptyForm)
   const isEdit = initial !== null
 
@@ -95,20 +106,17 @@ export function CustomerForm({ open, initial, loading, error, onSubmit, onClose 
   const internetServiceValue: ServiceOption = hasInternet ? 'No' : 'No internet service'
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
-      <button
-        type="button"
-        aria-label="Close panel"
-        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm animate-rise"
-        onClick={onClose}
-      />
-
+    <div
+      className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+    >
       <form
         onSubmit={handleSubmit}
-        className="relative w-full max-w-xl bg-bone-50 overflow-y-auto animate-rise flex flex-col"
+        className="pointer-events-auto relative flex h-[calc(100dvh-2rem)] max-h-[860px] w-full max-w-4xl flex-col bg-bone-50 border border-ink-900/15 shadow-2xl overflow-hidden animate-rise"
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-bone-50 border-b border-ink-900/10 px-7 py-5 flex items-start justify-between">
+        <div className="shrink-0 bg-bone-50 border-b border-ink-900/10 px-7 py-5 flex items-start justify-between">
           <div>
             <span className="text-[10px] uppercase tracking-[0.18em] text-ink-900/55 font-mono">
               {isEdit ? 'Edit customer' : 'New customer'}
@@ -128,13 +136,16 @@ export function CustomerForm({ open, initial, loading, error, onSubmit, onClose 
         </div>
 
         {/* Body */}
-        <div className="flex-1 px-7 py-6 space-y-8">
+        <div className="min-h-0 flex-1 overflow-y-auto px-7 py-6 space-y-8">
           {/* Identity */}
           <Section title="Identity">
             <Text
               label="Full name"
-              value={form.displayName}
-              onChange={(v) => set('displayName', v)}
+              value={form.fullName}
+              onChange={(v) => {
+                set('fullName', v)
+                set('displayName', v)
+              }}
               required
             />
           </Section>
@@ -289,22 +300,36 @@ export function CustomerForm({ open, initial, loading, error, onSubmit, onClose 
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-bone-50 border-t border-ink-900/10 px-7 py-4 flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="flex-1 py-3 text-sm font-mono uppercase tracking-wider border border-ink-900/15 text-ink-900 hover:bg-ink-900/5 transition-colors disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 py-3 text-sm font-mono uppercase tracking-wider bg-ink-900 text-bone-50 hover:bg-ember-600 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Saving…' : isEdit ? 'Save changes' : 'Create customer'}
-          </button>
+        <div className="shrink-0 bg-bone-50 border-t border-ink-900/10 px-7 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            {isEdit && initial && onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(initial)}
+                disabled={loading}
+                className="h-11 px-4 text-sm font-mono uppercase tracking-wider border border-rust-500/40 text-rust-600 hover:bg-rust-500 hover:text-bone-50 transition-colors disabled:opacity-50"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+          <div className="flex flex-1 sm:flex-none gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 sm:w-36 py-3 text-sm font-mono uppercase tracking-wider border border-ink-900/15 text-ink-900 hover:bg-ink-900/5 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 sm:w-44 py-3 text-sm font-mono uppercase tracking-wider bg-ink-900 text-bone-50 hover:bg-ember-600 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Saving...' : isEdit ? 'Save changes' : 'Create customer'}
+            </button>
+          </div>
         </div>
       </form>
     </div>
