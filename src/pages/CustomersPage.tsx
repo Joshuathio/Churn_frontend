@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Download, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Plus, Users } from 'lucide-react'
 import type { FilterState } from '@/types'
-import { api, type CustomerWithName } from '@/lib/api'
+import { api, type CustomerInput, type CustomerWithName } from '@/lib/api'
 import { useApi } from '@/hooks/useApi'
 import { FilterBar } from '@/components/FilterBar'
 import { CustomerTable } from '@/components/CustomerTable'
 import { CustomerDrawer } from '@/components/CustomerDrawer'
+import { CustomerForm } from '@/components/CustomerForm'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState, LoadingState, ErrorState } from '@/components/EmptyState'
 
 const initialFilters: FilterState = {
@@ -23,6 +25,12 @@ export function CustomersPage() {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [selected, setSelected] = useState<CustomerWithName | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [formInitial, setFormInitial] = useState<CustomerWithName | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<CustomerWithName | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const customerQuery = useMemo(() => {
     const tenure =
@@ -79,6 +87,54 @@ export function CustomersPage() {
     setPage(1)
   }
 
+  function openCreateForm() {
+    setFormInitial(null)
+    setFormError(null)
+    setFormOpen(true)
+  }
+
+  function openEditForm(customer: CustomerWithName) {
+    setFormInitial(customer)
+    setFormError(null)
+    setSelected(null)
+    setFormOpen(true)
+  }
+
+  async function handleSubmitCustomer(payload: CustomerInput) {
+    setSaving(true)
+    setFormError(null)
+
+    try {
+      if (formInitial) {
+        await api.updateCustomer(formInitial.customerID, payload)
+      } else {
+        await api.createCustomer(payload)
+      }
+
+      setFormOpen(false)
+      setFormInitial(null)
+      refetch()
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to save customer')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDeleteCustomer() {
+    if (!deleteTarget) return
+    setDeleting(true)
+
+    try {
+      await api.deleteCustomer(deleteTarget.customerID)
+      setSelected(null)
+      setDeleteTarget(null)
+      refetch()
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-6 animate-rise">
       {/* Header */}
@@ -95,13 +151,22 @@ export function CustomersPage() {
             open the full risk breakdown.
           </p>
         </div>
-        <button
-          disabled={customers.length === 0}
-          className="flex items-center gap-2 h-10 px-4 border border-ink-900/15 hover:bg-ink-900 hover:text-bone-50 transition-colors text-xs font-mono uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-900/40"
-        >
-          <Download className="h-3.5 w-3.5" />
-          Export CSV
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openCreateForm}
+            className="flex items-center gap-2 h-10 px-4 bg-ink-900 text-bone-50 hover:bg-ember-600 transition-colors text-xs font-mono uppercase tracking-wider"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Create customer
+          </button>
+          <button
+            disabled={customers.length === 0}
+            className="flex items-center gap-2 h-10 px-4 border border-ink-900/15 hover:bg-ink-900 hover:text-bone-50 transition-colors text-xs font-mono uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-900/40"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export CSV
+          </button>
+        </div>
       </header>
 
       {/* Loading / error / empty / table */}
@@ -145,7 +210,38 @@ export function CustomersPage() {
       )}
 
       {/* Drawer */}
-      <CustomerDrawer customer={selected} onClose={() => setSelected(null)} />
+      <CustomerDrawer
+        customer={selected}
+        onClose={() => setSelected(null)}
+        onEdit={openEditForm}
+        onDelete={setDeleteTarget}
+      />
+      <CustomerForm
+        open={formOpen}
+        initial={formInitial}
+        loading={saving}
+        error={formError}
+        onSubmit={handleSubmitCustomer}
+        onClose={() => {
+          setFormOpen(false)
+          setFormInitial(null)
+          setFormError(null)
+        }}
+      />
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete customer?"
+        message={
+          deleteTarget
+            ? `${deleteTarget.displayName} and its prediction history will be permanently removed.`
+            : ''
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleDeleteCustomer}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }

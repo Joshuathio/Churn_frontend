@@ -17,7 +17,7 @@ interface CustomerFormProps {
   initial: CustomerWithName | null // null = create mode
   loading?: boolean
   error?: string | null
-  onSubmit: (payload: CustomerInput) => void
+  onSubmit: (payload: CustomerInput) => void | Promise<void>
   onClose: () => void
 }
 
