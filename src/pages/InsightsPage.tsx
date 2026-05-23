@@ -53,7 +53,7 @@ export function InsightsPage() {
           Why customers <span className="italic font-light">leave</span>
         </h1>
         <p className="mt-2 text-sm text-ink-900/60 max-w-xl">
-          Feature importance scores from the Random Forest model — these are the
+          Feature importance scores from the XGBoost model — these are the
           signals driving every prediction.
         </p>
       </header>
@@ -194,7 +194,7 @@ export function InsightsPage() {
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-bone-300/70">
               Model performance · last evaluation
             </span>
-            <h3 className="mt-2 font-display text-3xl">Random Forest Classifier</h3>
+            <h3 className="mt-2 font-display text-3xl">XGBoost Classifier</h3>
           </div>
           <span className="font-mono text-xs text-bone-300/60">
             Awaiting evaluation report

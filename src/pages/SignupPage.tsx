@@ -152,7 +152,7 @@ export function SignupPage() {
             <ol className="mt-10 space-y-5 max-w-md">
               {[
                 { n: '01', t: 'Ingest', d: 'Your customer data flows through our Express API.' },
-                { n: '02', t: 'Predict', d: 'A Random Forest model scores churn risk in milliseconds.' },
+                { n: '02', t: 'Predict', d: 'An XGBoost model scores churn risk in milliseconds.' },
                 { n: '03', t: 'Act', d: 'Your team sees the top reasons — and intervenes before churn.' },
               ].map((s) => (
                 <li key={s.n} className="flex gap-5 items-start">

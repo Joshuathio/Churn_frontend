@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Download, Plus, Users } from 'lucide-react'
 import type { FilterState } from '@/types'
 import { api, type CustomerInput, type CustomerWithName } from '@/lib/api'
@@ -22,6 +22,7 @@ const initialFilters: FilterState = {
 
 export function CustomersPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilters)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [selected, setSelected] = useState<CustomerWithName | null>(null)
@@ -31,6 +32,14 @@ export function CustomersPage() {
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<CustomerWithName | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(filters.search.trim())
+    }, 350)
+
+    return () => window.clearTimeout(timeout)
+  }, [filters.search])
 
   const customerQuery = useMemo(() => {
     const tenure =
@@ -47,7 +56,7 @@ export function CustomersPage() {
     return {
       page,
       limit,
-      search: filters.search || undefined,
+      search: debouncedSearch || undefined,
       minProbability:
         filters.minProbability > 0 ? filters.minProbability / 100 : undefined,
       maxProbability:
@@ -62,7 +71,17 @@ export function CustomersPage() {
             : undefined,
       ...tenure,
     } as const
-  }, [filters, page, limit])
+  }, [
+    debouncedSearch,
+    filters.contract,
+    filters.internet,
+    filters.maxProbability,
+    filters.minProbability,
+    filters.riskTier,
+    filters.tenureRange,
+    limit,
+    page,
+  ])
 
   const { data, loading, error, refetch } = useApi(
     () => api.listCustomers(customerQuery),
@@ -76,6 +95,15 @@ export function CustomersPage() {
       totalRecords: 0,
       totalPages: 1,
     }
+  const isFiltered =
+    filters.search.trim() !== '' ||
+    filters.minProbability > 0 ||
+    filters.maxProbability < 100 ||
+    filters.contract !== 'all' ||
+    filters.internet !== 'all' ||
+    filters.tenureRange !== 'all' ||
+    filters.riskTier !== 'all'
+  const initialLoading = loading && !data
 
   function handleFiltersChange(next: FilterState) {
     setFilters(next)
@@ -128,6 +156,8 @@ export function CustomersPage() {
     try {
       await api.deleteCustomer(deleteTarget.customerID)
       setSelected(null)
+      setFormOpen(false)
+      setFormInitial(null)
       setDeleteTarget(null)
       refetch()
     } finally {
@@ -170,7 +200,7 @@ export function CustomersPage() {
       </header>
 
       {/* Loading / error / empty / table */}
-      {loading ? (
+      {initialLoading ? (
         <div className="bg-bone-50 border border-ink-900/10">
           <LoadingState message="Loading customers…" />
         </div>
@@ -178,7 +208,7 @@ export function CustomersPage() {
         <div className="bg-bone-50 border border-ink-900/10">
           <ErrorState error={error} onRetry={refetch} />
         </div>
-      ) : customers.length === 0 ? (
+      ) : customers.length === 0 && !isFiltered ? (
         <div className="bg-bone-50 border border-ink-900/10">
           <EmptyState
             icon={<Users className="h-5 w-5" strokeWidth={1.5} />}
@@ -194,22 +224,40 @@ export function CustomersPage() {
             resultCount={customers.length}
             totalCount={meta.totalRecords}
           />
-          <CustomerTable customers={customers} onSelect={setSelected} />
-          <PaginationControls
-            page={meta.page}
-            limit={meta.limit}
-            totalRecords={meta.totalRecords}
-            totalPages={meta.totalPages}
-            onPageChange={setPage}
-            onLimitChange={handleLimitChange}
-          />
+          {customers.length === 0 ? (
+            <div className="bg-bone-50 border border-ink-900/10">
+              <EmptyState
+                icon={<Users className="h-5 w-5" strokeWidth={1.5} />}
+                title="No matching customers"
+                message="Adjust the search or filters to broaden the customer list."
+              />
+            </div>
+          ) : (
+            <>
+              <div className={loading ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+                <CustomerTable customers={customers} onSelect={setSelected} />
+              </div>
+              <PaginationControls
+                page={meta.page}
+                limit={meta.limit}
+                totalRecords={meta.totalRecords}
+                totalPages={meta.totalPages}
+                onPageChange={setPage}
+                onLimitChange={handleLimitChange}
+              />
+            </>
+          )}
+          {loading && (
+            <div className="text-[11px] font-mono text-ink-900/40 text-center">
+              Updating results...
+            </div>
+          )}
           <div className="text-[11px] font-mono text-ink-900/40 text-center pt-2">
-            Predictions served by the Random Forest Classifier · Refreshed in real-time
+            Predictions served by the XGBoost model · Refreshed in real-time
           </div>
         </>
       )}
 
-      {/* Drawer */}
       <CustomerDrawer
         customer={selected}
         onClose={() => setSelected(null)}
@@ -222,6 +270,7 @@ export function CustomersPage() {
         loading={saving}
         error={formError}
         onSubmit={handleSubmitCustomer}
+        onDelete={(customer) => setDeleteTarget(customer)}
         onClose={() => {
           setFormOpen(false)
           setFormInitial(null)

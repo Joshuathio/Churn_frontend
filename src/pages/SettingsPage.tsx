@@ -39,7 +39,7 @@ export function SettingsPage() {
         <p className="text-xs text-ink-900/55 mb-6">Current ML pipeline configuration</p>
         <dl className="space-y-4">
           {[
-            { k: 'Algorithm', v: 'Random Forest Classifier' },
+            { k: 'Algorithm', v: 'XGBoost Classifier' },
             { k: 'Backend API', v: 'Flask · localhost:5000' },
             { k: 'Dataset', v: 'Telco Customer Churn · 7,043 rows' },
             { k: 'Target recall', v: '≥ 80%' },

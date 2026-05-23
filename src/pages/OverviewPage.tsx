@@ -52,7 +52,7 @@ export function OverviewPage() {
           </h1>
           <p className="mt-2 text-sm text-ink-900/60 max-w-xl">
             A real-time view of churn risk across your customer base, scored by
-            the Random Forest model.
+            the XGBoost model.
           </p>
         </div>
         <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-900/55">

@@ -27,14 +27,12 @@ export function ConfirmDialog({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" role="dialog" aria-modal="true">
-      <button
-        type="button"
-        aria-label="Close"
-        className="absolute inset-0 bg-ink-900/50 backdrop-blur-sm animate-rise"
-        onClick={onCancel}
-      />
-      <div className="relative w-full max-w-md bg-bone-50 border border-ink-900/15 animate-rise">
+    <div
+      className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center px-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="pointer-events-auto relative w-full max-w-md bg-bone-50 border border-ink-900/15 shadow-2xl animate-rise">
         <div className="px-7 py-6">
           <div className="flex items-start gap-4">
             {variant === 'danger' && (
