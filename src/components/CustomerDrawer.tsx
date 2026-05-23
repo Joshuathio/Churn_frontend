@@ -1,4 +1,4 @@
-import { X, TrendingUp, TrendingDown } from 'lucide-react'
+import { X, TrendingUp, TrendingDown, Pencil, Trash2 } from 'lucide-react'
 import type { Customer } from '@/types'
 import { cn, formatCurrency, formatPercent, tenureLabel, tierColor, tierFromProbability, tierLabel } from '@/lib/utils'
 import { RiskBadge } from './RiskBadge'
@@ -6,6 +6,8 @@ import { RiskBadge } from './RiskBadge'
 interface CustomerDrawerProps {
   customer: (Customer & { displayName: string }) | null
   onClose: () => void
+  onEdit?: (customer: Customer & { displayName: string }) => void
+  onDelete?: (customer: Customer & { displayName: string }) => void
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -19,7 +21,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-export function CustomerDrawer({ customer, onClose }: CustomerDrawerProps) {
+export function CustomerDrawer({ customer, onClose, onEdit, onDelete }: CustomerDrawerProps) {
   if (!customer) return null
   const tier = tierFromProbability(customer.churnProbability)
   const colors = tierColor[tier]
@@ -53,13 +55,33 @@ export function CustomerDrawer({ customer, onClose }: CustomerDrawerProps) {
               ID · {customer.customerID}
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-bone-300 hover:text-bone-50 transition-colors p-1 -mr-1"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {onEdit && (
+              <button
+                onClick={() => onEdit(customer)}
+                className="text-bone-300 hover:text-bone-50 transition-colors p-1"
+                aria-label="Edit customer"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={() => onDelete(customer)}
+                className="text-bone-300 hover:text-rust-400 transition-colors p-1"
+                aria-label="Delete customer"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-bone-300 hover:text-bone-50 transition-colors p-1 -mr-1"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Risk hero */}
