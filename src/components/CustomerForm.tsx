@@ -24,6 +24,7 @@ interface CustomerFormProps {
 
 const emptyForm: CustomerInput = {
   displayName: '',
+  fullName: '',
   gender: 'Male',
   SeniorCitizen: 0,
   Partner: 'No',
@@ -48,6 +49,7 @@ const emptyForm: CustomerInput = {
 function customerToInput(c: CustomerWithName): CustomerInput {
   return {
     displayName: c.displayName,
+    fullName: c.fullName ?? c.displayName,
     gender: c.gender,
     SeniorCitizen: c.SeniorCitizen,
     Partner: c.Partner,
@@ -139,8 +141,11 @@ export function CustomerForm({
           <Section title="Identity">
             <Text
               label="Full name"
-              value={form.displayName}
-              onChange={(v) => set('displayName', v)}
+              value={form.fullName}
+              onChange={(v) => {
+                set('fullName', v)
+                set('displayName', v)
+              }}
               required
             />
           </Section>
