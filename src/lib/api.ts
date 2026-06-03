@@ -1,4 +1,5 @@
 import type {
+  AgentUser,
   CasePriority,
   CaseResolutionOutcome,
   CaseStatus,
@@ -17,8 +18,6 @@ const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 export type CustomerWithName = Customer & { displayName: string }
 
-// Input payload untuk create/update. Server yang generate customerID,
-// churnProbability, riskFactors, lastUpdated.
 export type CustomerInput = Omit<
   Customer,
   'customerID' | 'churnProbability' | 'riskFactors' | 'lastUpdated' | 'Churn'
@@ -84,11 +83,7 @@ export interface ContractAggregate {
 export interface PaginatedCases {
   msg: 'success'
   data: InterventionCase[]
-  meta: {
-    page: number
-    limit: number
-    totalRecords: number
-    totalPages: number
+  meta: PaginationMeta & {
     scope: 'mine' | 'unassigned' | 'all'
   }
 }
@@ -138,69 +133,69 @@ export interface UpdateCaseInput {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     ...init,
   })
+
   if (!res.ok) {
-    throw new Error(`API ${res.status}: ${res.statusText}`)
+    const body = await res.json().catch(() => null)
+    const message =
+      body?.message ??
+      body?.msg ??
+      body?.error ??
+      (body?.errors ? 'Validation failed' : `API ${res.status}: ${res.statusText}`)
+    throw new Error(message)
   }
+
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
+function queryString(params: object) {
+  const search = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      search.set(key, String(value))
+    }
+  })
+  const query = search.toString()
+  return query ? `?${query}` : ''
+}
+
 export const api = {
-  // Reads
-  listCustomers: (params: CustomerListParams = {}) => {
-    const search = new URLSearchParams()
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        search.set(key, String(value))
-      }
-    })
-    const query = search.toString()
-    return request<PaginatedCustomers>(`/customers${query ? `?${query}` : ''}`)
-  },
+  listCustomers: (params: CustomerListParams = {}) =>
+    request<PaginatedCustomers>(`/customers${queryString(params)}`),
   getCustomer: (id: string) =>
     request<CustomerWithName>(`/customers/${encodeURIComponent(id)}`),
-  getOverview: () => request<OverviewStats>('/overview'),
-  getPredictionHistory: () =>
-    request<PredictionHistoryPoint[]>('/predictions/history'),
-  getRiskDistribution: () =>
-    request<RiskDistributionBucket[]>('/predictions/distribution'),
-  getContractAggregates: () =>
-    request<ContractAggregate[]>('/analytics/by-contract'),
-  listInterventionCases: (params: CaseListParams = {}) => {
-    const search = new URLSearchParams()
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        search.set(key, String(value))
-      }
-    })
-    const query = search.toString()
-    return request<PaginatedCases>(`/interventions/cases${query ? `?${query}` : ''}`)
-  },
-  getInterventionCase: (id: string) =>
-    request<InterventionCase>(`/interventions/cases/${encodeURIComponent(id)}`),
-  getInterventionAnalytics: () =>
-    request<InterventionAnalytics>('/interventions/analytics'),
-
-  // Mutations
   createCustomer: (payload: CustomerInput) =>
     request<CustomerWithName>('/customers', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-
-  updateCustomer: (id: string, payload: CustomerInput) =>
+  updateCustomer: (id: string, payload: Partial<CustomerInput>) =>
     request<CustomerWithName>(`/customers/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
-
   deleteCustomer: (id: string) =>
     request<{ ok: true }>(`/customers/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }),
+
+  getOverview: () => request<OverviewStats>('/overview'),
+  getPredictionHistory: () => request<PredictionHistoryPoint[]>('/predictions/history'),
+  getRiskDistribution: () => request<RiskDistributionBucket[]>('/predictions/distribution'),
+  getContractAggregates: () => request<ContractAggregate[]>('/analytics/by-contract'),
+
+  listAgents: () => request<{ msg: 'success'; data: AgentUser[] }>('/users/agents'),
+
+  listInterventionCases: (params: CaseListParams = {}) =>
+    request<PaginatedCases>(`/interventions/cases${queryString(params)}`),
+  getInterventionCase: (id: string) =>
+    request<InterventionCase>(`/interventions/cases/${encodeURIComponent(id)}`),
+  getInterventionAnalytics: () =>
+    request<InterventionAnalytics>('/interventions/analytics'),
   openInterventionCase: (payload: OpenCaseInput) =>
     request<InterventionCase>('/interventions/cases', {
       method: 'POST',
@@ -211,10 +206,10 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
-  claimInterventionCase: (id: string) =>
+  claimInterventionCase: (id: string, assignedToId?: string) =>
     request<InterventionCase>(`/interventions/cases/${encodeURIComponent(id)}/claim`, {
       method: 'POST',
-      body: JSON.stringify({}),
+      body: JSON.stringify(assignedToId ? { assignedToId } : {}),
     }),
   createOutreachLog: (caseId: string, payload: OutreachInput) =>
     request<OutreachLog>(`/interventions/cases/${encodeURIComponent(caseId)}/outreach`, {

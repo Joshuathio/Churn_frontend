@@ -37,7 +37,11 @@ export default {
         rust: {
           400: '#c75d3e',
           500: '#a8442a',
+          600: '#87351f',
         },
+      },
+      boxShadow: {
+        lift: '0 18px 60px rgb(10 10 10 / 0.14)',
       },
     },
   },

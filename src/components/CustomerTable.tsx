@@ -1,20 +1,19 @@
 import { useState } from 'react'
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
-import type { Customer } from '@/types'
-import { cn, formatCurrency, initials, tenureLabel } from '@/lib/utils'
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
+import type { CustomerWithName } from '@/lib/api'
 import { RiskBadge } from './RiskBadge'
-
-type CustomerWithName = Customer & { displayName: string }
+import { cn, formatCurrency, initials, tenureLabel } from '@/lib/utils'
 
 type SortKey = 'name' | 'probability' | 'tenure' | 'monthly' | 'contract'
 type SortDir = 'asc' | 'desc'
 
-interface CustomerTableProps {
+export function CustomerTable({
+  customers,
+  onSelect,
+}: {
   customers: CustomerWithName[]
-  onSelect: (c: CustomerWithName) => void
-}
-
-export function CustomerTable({ customers, onSelect }: CustomerTableProps) {
+  onSelect: (customer: CustomerWithName) => void
+}) {
   const [sortKey, setSortKey] = useState<SortKey>('probability')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
@@ -35,154 +34,139 @@ export function CustomerTable({ customers, onSelect }: CustomerTableProps) {
   })
 
   function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
+    if (sortKey === key) setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))
+    else {
       setSortKey(key)
       setSortDir(key === 'name' || key === 'contract' ? 'asc' : 'desc')
     }
   }
 
-  function SortIcon({ k }: { k: SortKey }) {
-    if (sortKey !== k) return <ArrowUpDown className="h-3 w-3 opacity-30" />
-    return sortDir === 'asc' ? (
-      <ArrowUp className="h-3 w-3" />
-    ) : (
-      <ArrowDown className="h-3 w-3" />
-    )
-  }
-
   return (
-    <div className="bg-bone-50 border border-ink-900/10 overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="border border-ink-900/10 bg-bone-50">
+      <div className="hidden overflow-x-auto lg:block">
         <table className="w-full">
           <thead>
             <tr className="border-b border-ink-900/10">
-              <Th onClick={() => toggleSort('name')}>
-                <span>Customer</span>
-                <SortIcon k="name" />
-              </Th>
-              <Th onClick={() => toggleSort('probability')} className="text-right">
-                <SortIcon k="probability" />
-                <span>Churn risk</span>
-              </Th>
-              <Th onClick={() => toggleSort('contract')}>
-                <span>Contract</span>
-                <SortIcon k="contract" />
-              </Th>
-              <Th onClick={() => toggleSort('tenure')} className="text-right">
-                <SortIcon k="tenure" />
-                <span>Tenure</span>
-              </Th>
-              <Th onClick={() => toggleSort('monthly')} className="text-right">
-                <SortIcon k="monthly" />
-                <span>Monthly</span>
-              </Th>
+              <Th onClick={() => toggleSort('name')} icon={<SortIcon active={sortKey === 'name'} dir={sortDir} />}>Customer</Th>
+              <Th align="right" onClick={() => toggleSort('probability')} icon={<SortIcon active={sortKey === 'probability'} dir={sortDir} />}>Churn risk</Th>
+              <Th onClick={() => toggleSort('contract')} icon={<SortIcon active={sortKey === 'contract'} dir={sortDir} />}>Contract</Th>
+              <Th align="right" onClick={() => toggleSort('tenure')} icon={<SortIcon active={sortKey === 'tenure'} dir={sortDir} />}>Tenure</Th>
+              <Th align="right" onClick={() => toggleSort('monthly')} icon={<SortIcon active={sortKey === 'monthly'} dir={sortDir} />}>Monthly</Th>
               <Th>Internet</Th>
               <Th>Top driver</Th>
             </tr>
           </thead>
           <tbody>
-            {sorted.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="text-center py-16 text-ink-900/50 text-sm">
-                  No customers match these filters
-                </td>
+            {sorted.map((customer) => (
+              <tr
+                key={customer.customerID}
+                onClick={() => onSelect(customer)}
+                className="group cursor-pointer border-b border-ink-900/5 transition-colors hover:bg-ink-900/[0.025]"
+              >
+                <Td>
+                  <CustomerIdentity customer={customer} />
+                </Td>
+                <Td className="text-right">
+                  <div className="flex justify-end">
+                    <RiskBadge customer={customer} showLabel={false} />
+                  </div>
+                </Td>
+                <Td>{customer.Contract}</Td>
+                <Td className="text-right font-mono tabular">{tenureLabel(customer.tenure)}</Td>
+                <Td className="text-right font-mono tabular">{formatCurrency(customer.MonthlyCharges)}</Td>
+                <Td>{customer.InternetService}</Td>
+                <Td className="max-w-48 truncate text-xs text-ink-900/65">{customer.riskFactors[0]?.feature ?? '-'}</Td>
               </tr>
-            ) : (
-              sorted.map((c) => (
-                <tr
-                  key={c.customerID}
-                  onClick={() => onSelect(c)}
-                  className={cn(
-                    'border-b border-ink-900/5 cursor-pointer',
-                    'hover:bg-ink-900/[0.025] transition-colors group',
-                  )}
-                >
-                  <Td>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          'h-8 w-8 flex items-center justify-center text-[10px] font-mono font-medium',
-                          'bg-bone-200 text-ink-900',
-                          'group-hover:bg-ink-900 group-hover:text-bone-50 transition-colors',
-                        )}
-                      >
-                        {initials(c.displayName)}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-ink-900 leading-tight">
-                          {c.displayName}
-                        </span>
-                        <span className="text-[11px] font-mono text-ink-900/45 leading-tight">
-                          {c.customerID}
-                        </span>
-                      </div>
-                    </div>
-                  </Td>
-                  <Td className="text-right">
-                    <div className="flex justify-end">
-                      <RiskBadge probability={c.churnProbability} showLabel={false} />
-                    </div>
-                  </Td>
-                  <Td>
-                    <span className="text-sm text-ink-900/85">{c.Contract}</span>
-                  </Td>
-                  <Td className="text-right font-mono text-sm tabular text-ink-900/80">
-                    {tenureLabel(c.tenure)}
-                  </Td>
-                  <Td className="text-right font-mono text-sm tabular text-ink-900/80">
-                    {formatCurrency(c.MonthlyCharges)}
-                  </Td>
-                  <Td>
-                    <span className="text-sm text-ink-900/85">{c.InternetService}</span>
-                  </Td>
-                  <Td>
-                    <span className="text-xs text-ink-900/65">
-                      {c.riskFactors[0]?.feature ?? '—'}
-                    </span>
-                  </Td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="divide-y divide-ink-900/5 lg:hidden">
+        {sorted.map((customer) => (
+          <button
+            key={customer.customerID}
+            type="button"
+            onClick={() => onSelect(customer)}
+            className="w-full p-4 text-left transition-colors hover:bg-ink-900/[0.025]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <CustomerIdentity customer={customer} />
+              <RiskBadge customer={customer} />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <Mini label="Contract" value={customer.Contract} />
+              <Mini label="Tenure" value={tenureLabel(customer.tenure)} />
+              <Mini label="Monthly" value={formatCurrency(customer.MonthlyCharges)} />
+              <Mini label="Internet" value={customer.InternetService} />
+            </div>
+            <div className="mt-3 border-t border-ink-900/5 pt-3 text-xs text-ink-900/60">
+              Top driver: {customer.riskFactors[0]?.feature ?? '-'}
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   )
 }
 
+function CustomerIdentity({ customer }: { customer: CustomerWithName }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-bone-200 font-mono text-[10px] font-medium text-ink-900 transition-colors group-hover:bg-ink-900 group-hover:text-bone-50">
+        {initials(customer.displayName)}
+      </div>
+      <div className="min-w-0">
+        <div className="truncate text-sm text-ink-900">{customer.displayName}</div>
+        <div className="truncate font-mono text-[11px] text-ink-900/45">{customer.customerID}</div>
+      </div>
+    </div>
+  )
+}
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <ArrowUpDown className="h-3 w-3 opacity-30" />
+  return dir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+}
+
 function Th({
   children,
+  icon,
   onClick,
-  className,
+  align = 'left',
 }: {
   children: React.ReactNode
+  icon?: React.ReactNode
   onClick?: () => void
-  className?: string
+  align?: 'left' | 'right'
 }) {
   return (
     <th
       onClick={onClick}
       className={cn(
-        'text-left px-4 py-3',
-        'text-[10px] uppercase tracking-[0.15em] font-mono text-ink-900/55',
-        onClick && 'cursor-pointer hover:text-ink-900 select-none',
-        className,
+        'px-4 py-3 text-left font-mono text-[10px] uppercase tracking-[0.15em] text-ink-900/55',
+        onClick && 'cursor-pointer hover:text-ink-900',
+        align === 'right' && 'text-right',
       )}
     >
-      <div
-        className={cn(
-          'flex items-center gap-1.5',
-          className?.includes('text-right') && 'justify-end',
-        )}
-      >
-        {children}
+      <div className={cn('flex items-center gap-1.5', align === 'right' && 'justify-end')}>
+        {align === 'right' && icon}
+        <span>{children}</span>
+        {align === 'left' && icon}
       </div>
     </th>
   )
 }
 
 function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={cn('px-4 py-3', className)}>{children}</td>
+  return <td className={cn('px-4 py-3 text-sm text-ink-900/80', className)}>{children}</td>
+}
+
+function Mini({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-900/45">{label}</div>
+      <div className="mt-0.5 text-sm text-ink-900/80">{value}</div>
+    </div>
+  )
 }

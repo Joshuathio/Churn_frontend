@@ -61,16 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     authRequest<BetterAuthSessionResponse | null>('/get-session')
       .then((session) => {
-        if (cancelled) return
-        setUser(session?.user ? toAppUser(session.user) : null)
+        if (!cancelled) setUser(session?.user ? toAppUser(session.user) : null)
       })
       .catch(() => {
-        if (cancelled) return
-        setUser(null)
+        if (!cancelled) setUser(null)
       })
       .finally(() => {
-        if (cancelled) return
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       })
 
     return () => {

@@ -1,6 +1,3 @@
-// Types mirror the Telco Customer Churn dataset described in the proposal.
-// 21 features + churn prediction output from the ML service.
-
 export type YesNo = 'Yes' | 'No'
 export type Gender = 'Male' | 'Female'
 export type ContractType = 'Month-to-month' | 'One year' | 'Two year'
@@ -13,31 +10,28 @@ export type PaymentMethod =
 
 export type ServiceOption = YesNo | 'No internet service'
 export type MultipleLinesOption = YesNo | 'No phone service'
-
 export type RiskTier = 'low' | 'high'
 
 export interface RiskFactor {
   feature: string
-  impact: number // 0..1, normalized contribution from model explanation
+  impact: number
+  shapValue?: number
   direction: 'increases' | 'decreases'
 }
 
 export interface Customer {
   customerID: string
   fullName?: string | null
-  // Demographics
   gender: Gender
   SeniorCitizen: 0 | 1
   Partner: YesNo
   Dependents: YesNo
-  // Account
   tenure: number
   Contract: ContractType
   PaperlessBilling: YesNo
   PaymentMethod: PaymentMethod
   MonthlyCharges: number
   TotalCharges: number
-  // Services
   PhoneService: YesNo
   MultipleLines: MultipleLinesOption
   InternetService: InternetService
@@ -47,12 +41,11 @@ export interface Customer {
   TechSupport: ServiceOption
   StreamingTV: ServiceOption
   StreamingMovies: ServiceOption
-  // Target / prediction
   Churn: YesNo
-  churnProbability: number // 0..1 from model probability output
+  churnProbability: number
   riskLevel?: 'LOW' | 'HIGH' | null
   riskFactors: RiskFactor[]
-  lastUpdated: string // ISO
+  lastUpdated: string
   lastPredictedAt?: string | null
 }
 
@@ -61,6 +54,15 @@ export interface User {
   name: string
   email: string
   role: 'CS Agent' | 'ChurnAi Manager' | 'Admin'
+}
+
+export type BackendRole = 'CS_AGENT' | 'MANAGER'
+
+export interface AgentUser {
+  id: string
+  name: string
+  email: string
+  role: BackendRole
 }
 
 export type CaseStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
@@ -100,7 +102,7 @@ export interface CaseUser {
   id: string
   name: string
   email: string
-  role: 'CS_AGENT' | 'MANAGER'
+  role: BackendRole
 }
 
 export interface OutreachLog {
