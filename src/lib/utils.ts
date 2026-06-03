@@ -1,5 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
-import type { RiskTier } from '@/types'
+import type { Customer, RiskTier } from '@/types'
+
+export const RISK_THRESHOLD = 0.59
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
@@ -14,13 +16,23 @@ export function formatCurrency(value: number): string {
   }).format(value)
 }
 
+export function formatCompactCurrency(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value)
+}
+
 export function formatPercent(value: number, digits = 1): string {
   return `${(value * 100).toFixed(digits)}%`
 }
 
-export function tierFromProbability(p: number): RiskTier {
-  if (p >= 0.5) return 'high'
-  return 'low'
+export function riskTierFor(customer: Pick<Customer, 'churnProbability' | 'riskLevel'>): RiskTier {
+  if (customer.riskLevel === 'HIGH') return 'high'
+  if (customer.riskLevel === 'LOW') return 'low'
+  return customer.churnProbability >= RISK_THRESHOLD ? 'high' : 'low'
 }
 
 export const tierLabel: Record<RiskTier, string> = {
@@ -53,8 +65,23 @@ export function tenureLabel(months: number): string {
 export function initials(name: string): string {
   return name
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(0, 2)
     .join('')
     .toUpperCase()
+}
+
+export function prettyEnum(value: string) {
+  return value.replace(/_/g, ' ')
+}
+
+export function dateLabel(value?: string | null) {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString()
+}
+
+export function dateTimeLabel(value?: string | null) {
+  if (!value) return '—'
+  return new Date(value).toLocaleString()
 }

@@ -1,59 +1,49 @@
+import { PageHeader, Panel } from '@/components/ui/Panel'
 import { useAuth } from '@/context/AuthContext'
 
 export function SettingsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="space-y-8 max-w-2xl animate-rise">
-      <header>
-        <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-900/55">
-          Workspace
-        </span>
-        <h1 className="mt-2 font-display text-5xl tracking-tight text-ink-900">
-          Settings
-        </h1>
-      </header>
+    <div className="max-w-2xl space-y-6 animate-rise sm:space-y-8">
+      <PageHeader eyebrow="Workspace" title="Settings" />
 
-      <section className="bg-bone-50 border border-ink-900/10 p-6">
-        <h3 className="font-display text-xl text-ink-900 mb-1">Profile</h3>
-        <p className="text-xs text-ink-900/55 mb-6">Your account information</p>
-        <dl className="space-y-4">
-          {[
-            { k: 'Name', v: user?.name ?? '—' },
-            { k: 'Email', v: user?.email ?? '—' },
-            { k: 'Role', v: user?.role ?? '—' },
-            { k: 'User ID', v: user?.id ?? '—' },
-          ].map((r) => (
-            <div key={r.k} className="flex justify-between items-baseline gap-6 py-2 border-b border-ink-900/5 last:border-0">
-              <dt className="text-[10px] uppercase tracking-[0.18em] font-mono text-ink-900/55">
-                {r.k}
-              </dt>
-              <dd className="text-sm text-ink-900 font-mono tabular text-right">{r.v}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <Panel title="Profile" eyebrow="Account information">
+        <DefinitionList
+          rows={[
+            ['Name', user?.name ?? '-'],
+            ['Email', user?.email ?? '-'],
+            ['Role', user?.role ?? '-'],
+            ['User ID', user?.id ?? '-'],
+          ]}
+        />
+      </Panel>
 
-      <section className="bg-bone-50 border border-ink-900/10 p-6">
-        <h3 className="font-display text-xl text-ink-900 mb-1">Model</h3>
-        <p className="text-xs text-ink-900/55 mb-6">Current ML pipeline configuration</p>
-        <dl className="space-y-4">
-          {[
-            { k: 'Algorithm', v: 'XGBoost Classifier' },
-            { k: 'Backend API', v: 'Flask · localhost:5000' },
-            { k: 'Dataset', v: 'Telco Customer Churn · 7,043 rows' },
-            { k: 'Target recall', v: '≥ 80%' },
-            { k: 'Latency target', v: '< 2s per request' },
-          ].map((r) => (
-            <div key={r.k} className="flex justify-between items-baseline gap-6 py-2 border-b border-ink-900/5 last:border-0">
-              <dt className="text-[10px] uppercase tracking-[0.18em] font-mono text-ink-900/55">
-                {r.k}
-              </dt>
-              <dd className="text-sm text-ink-900 font-mono text-right">{r.v}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <Panel title="Model" eyebrow="Current pipeline configuration">
+        <DefinitionList
+          rows={[
+            ['Algorithm', 'XGBoost Classifier'],
+            ['ML API', 'Flask service'],
+            ['Auth', 'Better Auth session cookies'],
+            ['Dataset', 'Telco Customer Churn'],
+            ['Risk threshold', '0.59'],
+            ['Latency target', '< 2s per request'],
+          ]}
+        />
+      </Panel>
     </div>
+  )
+}
+
+function DefinitionList({ rows }: { rows: Array<[string, string]> }) {
+  return (
+    <dl className="space-y-1 p-5">
+      {rows.map(([key, value]) => (
+        <div key={key} className="flex items-baseline justify-between gap-6 border-b border-ink-900/5 py-3 last:border-0">
+          <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-900/55">{key}</dt>
+          <dd className="text-right font-mono text-sm text-ink-900 tabular">{value}</dd>
+        </div>
+      ))}
+    </dl>
   )
 }

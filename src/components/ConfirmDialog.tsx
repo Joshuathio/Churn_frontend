@@ -1,7 +1,18 @@
 import { AlertTriangle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ModalPortal } from './ModalPortal'
+import { Button } from './ui/Button'
 
-interface ConfirmDialogProps {
+export function ConfirmDialog({
+  open,
+  title,
+  message,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  variant = 'default',
+  loading,
+  onConfirm,
+  onCancel,
+}: {
   open: boolean
   title: string
   message: string
@@ -11,64 +22,42 @@ interface ConfirmDialogProps {
   loading?: boolean
   onConfirm: () => void
   onCancel: () => void
-}
-
-export function ConfirmDialog({
-  open,
-  title,
-  message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  variant = 'default',
-  loading = false,
-  onConfirm,
-  onCancel,
-}: ConfirmDialogProps) {
+}) {
   if (!open) return null
 
   return (
-    <div
-      className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center px-4"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="pointer-events-auto relative w-full max-w-md bg-bone-50 border border-ink-900/15 shadow-2xl animate-rise">
-        <div className="px-7 py-6">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink-900/50 p-4 sm:p-6">
+      <div className="w-full max-w-md animate-rise border border-ink-900/15 bg-bone-50 shadow-lift">
+        <div className="px-6 py-6">
           <div className="flex items-start gap-4">
             {variant === 'danger' && (
-              <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center bg-rust-500/10 text-rust-500">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-rust-500/10 text-rust-500">
                 <AlertTriangle className="h-5 w-5" strokeWidth={1.5} />
               </div>
             )}
-            <div className="flex-1">
+            <div>
               <h3 className="font-display text-xl text-ink-900">{title}</h3>
-              <p className="mt-2 text-sm text-ink-900/65 leading-relaxed">{message}</p>
+              <p className="mt-2 text-sm leading-relaxed text-ink-900/65">{message}</p>
             </div>
           </div>
         </div>
-        <div className="flex border-t border-ink-900/10">
-          <button
-            onClick={onCancel}
-            disabled={loading}
-            className="flex-1 py-3.5 text-xs font-mono uppercase tracking-wider text-ink-900/70 hover:bg-ink-900/[0.03] transition-colors disabled:opacity-50"
-          >
+        <div className="grid grid-cols-2 border-t border-ink-900/10">
+          <Button type="button" variant="ghost" disabled={loading} onClick={onCancel} className="h-12">
             {cancelLabel}
-          </button>
-          <div className="w-px bg-ink-900/10" aria-hidden />
-          <button
-            onClick={onConfirm}
+          </Button>
+          <Button
+            type="button"
+            variant={variant === 'danger' ? 'danger' : 'primary'}
             disabled={loading}
-            className={cn(
-              'flex-1 py-3.5 text-xs font-mono uppercase tracking-wider transition-colors disabled:opacity-50',
-              variant === 'danger'
-                ? 'text-rust-500 hover:bg-rust-500 hover:text-bone-50'
-                : 'text-ink-900 hover:bg-ink-900 hover:text-bone-50',
-            )}
+            onClick={onConfirm}
+            className="h-12 border-y-0 border-r-0"
           >
-            {loading ? 'Working…' : confirmLabel}
-          </button>
+            {loading ? 'Working...' : confirmLabel}
+          </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }

@@ -2,8 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Wordmark } from '@/components/Wordmark'
+import { Button } from '@/components/ui/Button'
+import { Field, Input } from '@/components/ui/Field'
 import { useAuth } from '@/context/AuthContext'
-import { cn } from '@/lib/utils'
 
 export function SignupPage() {
   const { signup, loading } = useAuth()
@@ -14,8 +15,8 @@ export function SignupPage() {
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
     setError('')
     if (!name || !email || !password) {
       setError('All fields are required')
@@ -38,89 +39,67 @@ export function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1fr_1.1fr]">
-      {/* Left — form column */}
-      <div className="flex items-center justify-center px-8 lg:px-16 py-12 bg-bone-50 order-2 lg:order-1">
+    <div className="min-h-screen lg:grid lg:grid-cols-[0.92fr_1.08fr]">
+      <main className="flex min-h-screen items-center justify-center bg-bone-50 px-6 py-10 lg:min-h-0 lg:px-14">
         <div className="w-full max-w-sm animate-rise">
           <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-900/60">
             01 · Create account
           </span>
-          <h2 className="mt-3 font-display text-4xl tracking-tight text-ink-900">
-            Join ChurnAi
-          </h2>
-          <p className="mt-2 text-sm text-ink-900/60">
-            Start protecting your subscriber base.
-          </p>
+          <h1 className="mt-3 font-display text-4xl text-ink-900">Join ChurnAi</h1>
+          <p className="mt-2 text-sm text-ink-900/60">Start protecting your subscriber base.</p>
 
-          <form onSubmit={handleSubmit} className="mt-10 space-y-6">
-            <Field
-              label="Full name"
-              type="text"
-              value={name}
-              onChange={setName}
-              placeholder="Joshua Christian"
-              autoComplete="name"
-            />
-            <Field
-              label="Email"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              placeholder="you@company.com"
-              autoComplete="email"
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Field
-                label="Password"
-                type="password"
-                value={password}
-                onChange={setPassword}
-                placeholder="••••••••"
-                autoComplete="new-password"
+          <form onSubmit={handleSubmit} className="mt-9 space-y-5">
+            <Field label="Full name">
+              <Input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" />
+            </Field>
+            <Field label="Email">
+              <Input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
               />
-              <Field
-                label="Confirm"
-                type="password"
-                value={confirm}
-                onChange={setConfirm}
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
+            </Field>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <Field label="Password">
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="new-password"
+                />
+              </Field>
+              <Field label="Confirm">
+                <Input
+                  type="password"
+                  value={confirm}
+                  onChange={(event) => setConfirm(event.target.value)}
+                  autoComplete="new-password"
+                />
+              </Field>
             </div>
 
-            {error && (
-              <div className="text-xs text-rust-500 font-mono">{error}</div>
-            )}
+            {error && <div className="font-mono text-xs text-rust-500">{error}</div>}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={cn(
-                'group w-full h-12 flex items-center justify-between px-4',
-                'bg-ink-900 text-bone-50 text-sm font-mono uppercase tracking-wider',
-                'hover:bg-ember-600 transition-colors',
-                'disabled:opacity-60 disabled:cursor-not-allowed',
-              )}
-            >
-              <span>{loading ? 'Creating…' : 'Create account'}</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </button>
+            <Button type="submit" disabled={loading} variant="primary" className="w-full justify-between">
+              <span>{loading ? 'Creating...' : 'Create account'}</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-ink-900/10 text-sm text-ink-900/65">
+          <div className="mt-8 border-t border-ink-900/10 pt-6 text-sm text-ink-900/65">
             Already have an account?{' '}
             <Link
               to="/login"
-              className="text-ink-900 underline underline-offset-4 decoration-ember-500 decoration-2 hover:text-ember-600 transition-colors"
+              className="text-ink-900 underline decoration-ember-500 decoration-2 underline-offset-4 transition-colors hover:text-ember-600"
             >
               Sign in
             </Link>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Right — editorial column */}
-      <div className="relative bg-ink-900 text-bone-50 px-10 lg:px-16 py-12 flex flex-col overflow-hidden order-1 lg:order-2">
+      <aside className="relative hidden overflow-hidden bg-ink-900 px-12 py-10 text-bone-50 lg:flex lg:flex-col xl:px-16">
         <div
           aria-hidden
           className="absolute inset-0 opacity-[0.07]"
@@ -130,85 +109,40 @@ export function SignupPage() {
             backgroundSize: '48px 48px',
           }}
         />
-        <div
-          aria-hidden
-          className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-moss-500 blur-[120px] opacity-30"
-        />
-
-        <div className="relative z-10 flex flex-col h-full">
+        <div aria-hidden className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-moss-500 opacity-30 blur-[120px]" />
+        <div className="relative z-10 flex h-full flex-col">
           <Wordmark size="md" variant="light" />
-
-          <div className="flex-1 flex flex-col justify-center max-w-lg animate-rise">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-moss-400 mb-6">
-              Built for ChurnAi teams
+          <div className="flex flex-1 flex-col justify-center">
+            <span className="mb-6 font-mono text-[10px] uppercase tracking-[0.3em] text-moss-400">
+              Built for retention teams
             </span>
-            <h1 className="font-display text-5xl lg:text-6xl leading-[0.95] tracking-tight text-balance">
-              Every customer{' '}
-              <span className="italic font-light text-moss-400">has</span> a story.
+            <h2 className="max-w-xl text-balance font-display text-5xl leading-[0.96] text-bone-50 xl:text-6xl">
+              Every customer <span className="italic font-light text-moss-400">has</span> a story.
               <br />
               We help you finish it.
-            </h1>
-
-            <ol className="mt-10 space-y-5 max-w-md">
+            </h2>
+            <ol className="mt-10 max-w-md space-y-5">
               {[
-                { n: '01', t: 'Ingest', d: 'Your customer data flows through our Express API.' },
-                { n: '02', t: 'Predict', d: 'An XGBoost model scores churn risk in milliseconds.' },
-                { n: '03', t: 'Act', d: 'Your team sees the top reasons — and intervenes before churn.' },
-              ].map((s) => (
-                <li key={s.n} className="flex gap-5 items-start">
-                  <span className="font-mono text-xs text-moss-400 mt-1">{s.n}</span>
+                ['01', 'Ingest', 'Customer records flow through the Express API.'],
+                ['02', 'Predict', 'The Flask XGBoost service scores churn risk.'],
+                ['03', 'Act', 'Teams open cases, log outreach, and track offers.'],
+              ].map(([n, t, d]) => (
+                <li key={n} className="flex items-start gap-5">
+                  <span className="mt-1 font-mono text-xs text-moss-400">{n}</span>
                   <div>
-                    <div className="font-display text-xl text-bone-50">{s.t}</div>
-                    <div className="text-sm text-bone-300/80 mt-0.5">{s.d}</div>
+                    <div className="font-display text-xl text-bone-50">{t}</div>
+                    <div className="mt-0.5 text-sm text-bone-300/80">{d}</div>
                   </div>
                 </li>
               ))}
             </ol>
           </div>
-
-          <div className="relative z-10 font-mono text-[10px] uppercase tracking-[0.18em] text-bone-300/50">
-            <div className="rule mb-4 opacity-30" />
-            Powered by scikit-learn · FastAPI · React
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-bone-300/50">
+            <div className="rule mb-4 border-bone-50/30 opacity-30" />
+            Powered by Flask · Express · React
           </div>
         </div>
-      </div>
+      </aside>
     </div>
-  )
-}
-
-function Field({
-  label,
-  type,
-  value,
-  onChange,
-  placeholder,
-  autoComplete,
-}: {
-  label: string
-  type: string
-  value: string
-  onChange: (v: string) => void
-  placeholder?: string
-  autoComplete?: string
-}) {
-  return (
-    <label className="block">
-      <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-ink-900/55">
-        {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        className={cn(
-          'mt-2 w-full h-11 px-0 bg-transparent',
-          'border-0 border-b border-ink-900/20',
-          'text-base text-ink-900 placeholder:text-ink-900/30',
-          'focus:outline-none focus:border-ink-900 transition-colors',
-        )}
-      />
-    </label>
   )
 }
